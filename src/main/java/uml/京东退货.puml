@@ -1,0 +1,67 @@
+
+@startuml
+title:/member/getOrderMemberRewardTask（幸福1+1订购/续订会员奖励下发定时任务）
+start
+    :打印定时任务开始日志;
+	if(获取分布式锁) then (是)
+        :获取数据库中已完成处理的最大ID和缓存中的最大ID;
+
+        if (判断数据库中的最大ID < 缓存中的最大ID) then (yes)
+            :将数据库中的ID修改为缓存中的ID,并记录日志 ;
+        else (no)
+        endif
+            :根据ID查询,大于此ID的总数据,根据总数量进行分页;
+            note right
+            		需排除:
+            		    1.最福利下发会员   orderChannel != 43
+            		    2.权益营销兑换码订购  orderChannel != 52
+            		    3.体验会员  pay_type != 99
+            		    4.0元会员(好书专享会员) pay_type != 99
+            		操作类型为:
+                        1.订购
+                        2.自动续订
+                    tip:
+                       ORDER_CHANNEL:1BOSS，2android，3IOS，4其它，5外呼，6.12530，7对账，8、9、10积分商城，11一级营销平台，
+                       12咪咕书卡兑换，13省侧兑换，14咪咕币兑换，15会员活动兑换会员，16咪咕兑换环球黑卡会员和金卡会员，17环球黑卡兑换咪咕金卡会员，
+                       18客户端订购会员，19政企兑换咪咕会员，20CMDN兑换会员，22个人分销，23WAP页订购会员，26江苏掌厅兑换会员，31养成营卡，
+                       32鄂尔多斯兑换会员，35咪咕动漫商城，37大汉电商，38 39城市代理营销，40飞翰直充，41卓望订购会员，42线下推广端外wap，
+                       43最福利平台订购会员，45 0元购，46移动云，47咪咕权益平台，51人人带货，52兑换码 (权益套餐)，
+                       53组合支付，55日历积分营销活动（只生成话单），92重庆对接，93三方直冲
+
+            end note
+            partition 根据总数量进行分页 {
+                :根据ID查询member-biz接口获取200条数据(数据量建议可配置);
+                partition 循环处理数据 {
+                    :调用ability-biz接口/userInfo/getUserInfoByIdentityId，根据身份id 获取userid;
+                    if(调用promotion-biz接口发生Exception异常) then (是)
+                        :将缓存中的已处理ID更新为目前的ID;
+                        :捕获异常,并记录日志,记录出错的ID;
+                        :跳过此条数据;
+                    endif
+                    :调用promotion-biz接口/taskService/getUserCompletesTask 完成发星任务;
+                    note right
+                        入参:
+                            1.String userId
+                            2.Integer taskType (订购会员:3)
+                            3.String subTime(格式:yyyy-MM-dd HH:mm:ss)
+                    end note
+                    if(调用promotion-biz接口发生Exception异常) then (否)
+                        :将缓存中的已处理ID更新为目前的ID;
+
+                    else (是)
+                        :将缓存中的已处理ID更新为目前的ID;
+                        :捕获异常,并记录日志,记录出错的ID;
+                    endif
+
+                }
+                :一个循环流程结束将数据库中的ID修改为缓存中的ID,缓存不存在则取循环列表中的最大值;
+
+            }
+
+    else (否)
+        :记录日志return;
+    endif
+    :打印定时任务结束日志;
+
+
+@enduml
