@@ -1,7 +1,13 @@
 import pojo.User;
 
+import java.util.WeakHashMap;
+
 public class Test06 {
     public static void main(String[] args) {
+
+        String a1 = "fdasf2";
+        String substring = a1.substring(a1.length() - 1);
+        System.out.println("substring = " + substring);
         int a = 1010 & 1101;
         int b = ~1100;
         int c = -10 /500;
