@@ -1,11 +1,12 @@
-package jvmTest;
+package collectionTest;
 
 import dto.BigUserInfo;
 import dto.TokenInfo;
 
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.WeakHashMap;
-import java.util.concurrent.TimeUnit;
 
 public class WeakRefTest {
 
@@ -22,7 +23,7 @@ public class WeakRefTest {
 
         //强引用
         map.put(tokenInfo, bigUserInfo);
-        map.put(tokenInfo2, bigUserInfo2);
+        map.put(tokenInfo, bigUserInfo2);
 
         System.out.println("map.containsKey(tokenInfo) = " + map.containsKey(tokenInfo));
 
